@@ -1,0 +1,21 @@
+{
+    "name": "agent-loop-learning",
+    "version": "1.0.0",
+    "description": "Learning Agent Loop",
+    "main": "SimpleAgentLoop1_2.ts",
+    "type": "module",
+    "dependencies": {
+        "@ai-sdk/openai-compatible": "^1.0.3",
+        "ai": "^5.0.57",
+        "dotenv": "^17.4.2",
+        "zod": "^4.0.16"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "tsx": "^4.20.3",
+        "typescript": "^5.9.2"
+    },
+    "scripts": {
+        "dev": "tsx Stage3ToolAgentLoop.ts"
+    }
+}
