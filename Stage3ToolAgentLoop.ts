@@ -49,6 +49,7 @@ class SimpleAgentLoop {
                 return this.executeToolCall(toolCall);
             });
 
+            // 返回的结果封装成message存储到messages，让llm可以看到执行结果
             const toolMessage: ModelMessage = {
                 role: "tool",
                 content: toolResults,
@@ -83,8 +84,11 @@ class SimpleAgentLoop {
         const toolCalls = this.getToolCallsFromMessages(result.response.messages);
 
         return {
+            // 判断下一步是user还是agent
             actor: toolCalls.length > 0 ? "agent" as const : "user" as const,
+            // 用来打印在控制台中
             messages: hiddenMessages,
+            // agent停止理由
             finishReason: result.finishReason,
             // 如果 assistant 发起了 tool-call，但还没有对应 tool-result，这里就会有东西
             unprocessedToolCalls: toolCalls,
@@ -306,6 +310,7 @@ async function main() {
         //  result -> 大模型回复的 result，agent.getMessages() -> 所有的消息
         //printDebugState(result, agent.getMessages());
 
+        // 更新状态角色
         actor = result.actor;
     }
 
