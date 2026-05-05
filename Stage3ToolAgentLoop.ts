@@ -31,7 +31,7 @@ const toolDefs = {
 class SimpleAgentLoop {
     private messages: ModelMessage[] = [];
 
-    // 用户输入
+    // 用户输入，存储到 messages 中
     public userInput(text: string) {
         this.messages.push({
             role: "user",
@@ -42,7 +42,9 @@ class SimpleAgentLoop {
     public async next() {
         const unprocessedToolCalls = this.getUnprocessedToolCalls();
 
+        // 首先检查工具是否需要调用
         if (unprocessedToolCalls.length > 0) {
+            // 逐个遍历unprocessedToolCalls元素，进行调用工具
             const toolResults = unprocessedToolCalls.map((toolCall) => {
                 return this.executeToolCall(toolCall);
             });
@@ -57,6 +59,8 @@ class SimpleAgentLoop {
             // 当 agent 产生结果之后，需要 LLM 对于结果做一个输出
             return {
                 actor: "agent" as const,
+                // toolMessage是单个消息，返回时需要包装成数组
+                // 接受类型是：messages: ModelMessage[]
                 messages: [toolMessage],
                 finishReason: undefined,
                 unprocessedToolCalls: this.getUnprocessedToolCalls(),
@@ -177,6 +181,7 @@ class SimpleAgentLoop {
         })
     }
 
+    // 获取到未执行的工具
     private getUnprocessedToolCalls(): ToolCallPart[] {
         const parts: Record<string, ToolCallPart> = {};
 
