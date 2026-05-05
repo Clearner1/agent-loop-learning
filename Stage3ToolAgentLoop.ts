@@ -1,5 +1,5 @@
 
-import {tool, generateText, type ModelMessage, type UserModelMessage, ToolCallPart, ToolResultPart} from "ai";
+import { tool, generateText, type ModelMessage, type UserModelMessage, ToolCallPart, ToolResultPart } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
@@ -185,10 +185,12 @@ class SimpleAgentLoop {
     private getUnprocessedToolCalls(): ToolCallPart[] {
         const parts: Record<string, ToolCallPart> = {};
 
+        // 检查messages中是否存在tool-call，如果有处理
         for (const message of this.messages) {
             if (message.role === "assistant" && Array.isArray(message.content)) {
                 for (const part of message.content) {
                     if (part.type === "tool-call") {
+                        // 相当于直接创建了一个key为part.toolCallId，value为part
                         parts[part.toolCallId] = part;
                     }
                 }
@@ -209,7 +211,7 @@ class SimpleAgentLoop {
 
 
 
-
+// 把消息过滤，只获取LLM回复的文本，关于reasoning的部分直接过滤
 function getAssistantText(message: ModelMessage): string {
     if (message.role !== "assistant") {
         return "";
@@ -219,25 +221,35 @@ function getAssistantText(message: ModelMessage): string {
         return message.content;
     }
 
+    // if (Array.isArray(message.content)) {
+    //     return message.content
+    //         // 这里的 map 是创建一个新的数组然后进行返回
+    //         .map((part) => {
+    //             // 如果 part 类型是文本，直接返回
+    //             if (part.type === "text") {
+    //                 return part.text;
+    //             }
+    //             // 如果 part 是其他类型，直接返回空字符串
+    //             return "";
+    //         })
+    //         // join函数是指将数组中所有的元素用""进行连接，并返回一个字符串类型
+    //         .join("");
+    // }
+
+    // 先过滤再map
     if (Array.isArray(message.content)) {
         return message.content
-            // 这里的 map 是创建一个新的数组然后进行返回
-            .map((part) => {
-                // 如果 part 类型是文本，直接返回
-                if (part.type === "text") {
-                    return part.text;
-                }
-                // 如果 part 是其他类型，直接返回空字符串
-                return "";
-            })
-            // join函数是指将数组中所有的元素用""进行连接，并返回一个字符串类型
-            .join("");
+            // 先过滤，只保留type是text类型的
+            .filter((part) => part.type === "text")
+            // 生成新的数组
+            .map((part) => part.text)
+            .join("")
     }
 
     return "";
 }
 
-function printDebugState(result:{
+function printDebugState(result: {
     actor: "user" | "agent";
     messages: ModelMessage[];
     finishReason: string | undefined;
@@ -248,7 +260,7 @@ function printDebugState(result:{
     console.log("actor", result.actor);
     console.log("finishReason:", result.finishReason);
     console.log("new messages:");
-    console.dir(result.messages, {depth: null});
+    console.dir(result.messages, { depth: null });
     console.log("-------------------");
     console.log("all messages count:", allMessages.length);
     console.log("all messages:");
@@ -260,7 +272,7 @@ function printDebugState(result:{
 
 
 async function main() {
-    let actor : "user" | "agent" = "user";
+    let actor: "user" | "agent" = "user";
 
     const agent = new SimpleAgentLoop();
 
@@ -271,12 +283,13 @@ async function main() {
 
     while (true) {
         if (actor === "user") {
+            // 1. 用户输入
             const userText = await rl.question("You: ");
+            // 如果输入的是exit则直接退出
             if (userText.trim().toLowerCase() === "exit") {
                 break;
             }
             agent.userInput(userText);
-
         }
 
         const result = await agent.next();
